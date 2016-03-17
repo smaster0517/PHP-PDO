@@ -30,8 +30,27 @@
 		exit(); // prevent resof of the page from running if user is not logged in
 	}
 
-	/*-------------------- DELETE ITEMS-------------------*/
+	/*-------------------- GET(PARSE) FORM DATA ---------------*/
+	if(isset($_POST['fr_itemname']) && isset($_POST["fr_price"])) {
+		$fr_id = $_POST['this_id'];
+ 		$fr_name = $_POST['fr_itemname'];
+ 		$fr_price = $_POST['fr_price'];
+ 		$fr_category = $_POST['fr_category'];
+ 		$fr_subcategory = $_POST['fr_subcategory'];
+ 		$fr_details = $_POST['fr_details'];
 
+ 		$res= $dbh->prepare("UPDATE products SET product_name=?, price=?, category=?, subcategory=?, details=? WHERE id=?");
+		$res->execute([$fr_name, $fr_price, $fr_category, $fr_subcategory, $fr_details, $fr_id]);
+		if($_FILES['fr_image']['tmp_name'] != "") {
+			$newname = "$fr_id.jpg";
+			move_uploaded_file($_FILES['fr_image']['tmp_name'], "../inventory_images/".$newname);
+		}
+		// prevent form resubmission on reload
+		header("location: inventory_list.php");
+		exit();
+	}
+
+	/*-------------------- EDIT ITEMS-------------------*/
 	if(isset($_GET["pid"])){
 		$targetID = $_GET["pid"];
 		$product_list = "";
@@ -40,46 +59,19 @@
 		$productCount = $res->rowCount();
 		if ($productCount > 0) {
 			while ($row = $res->fetch()) {
-			    $id = $row['id'];
+				// $product_id = $row['id'];
 	    		$product_name = $row['product_name'];
-	    		$price = $row['price'];
-	    		$category = $row['category'];
- 				$subcategory = $row['subcategory'];
- 				$details = $row['details'];
-	    		$date_added = strftime("%b %d, %Y", strtotime($row['date_added']));
-			}
+	    		$product_price = $row['price'];
+	    		$product_cat = $row['category'];
+	    		$product_subcat = $row['subcategory'];
+	    		$product_details = $row['details'];
+	    		$date_added = strftime("%b %d, %Y", strtotime($row["date_added"]));
+    		}
 		}
 		else {
-			$product_list = "Item with ID $targetID does not exist!";
+			echo "Item with ID $targetID does not exist!";
 			exit();
 		}
-	}
-
-
-	/*-------------------- GET FORM DATA ---------------*/
-	if(isset($_POST['fr_itemname']) && isset($_POST["fr_price"])) {
- 		$fr_name = $_POST['fr_itemname'];
- 		$fr_price = $_POST['fr_price'];
- 		$fr_category = $_POST['fr_category'];
- 		$fr_subcategory = $_POST['fr_subcategory'];
- 		$fr_details = $_POST['fr_details'];
-
- 		$res= $dbh->prepare("SELECT id FROM products WHERE product_name=? LIMIT 1");
-		$res->execute([$fr_name]);
-		$productCount = $res->rowCount();  //count the number of rows, same as mysql mysql_num_rows($sqlquery);
-		if($productCount > 0){
-			echo 'Sorry, but an item with the name "$fr_name" already exists. Click here to reload page and try again: <a href"inventory_list.php">Refresh Page</a>'; //echo this if someone tries to forge session cookies
-			exit(); // prevent resof of the page from running if user is not logged in
-		}
-		$res= $dbh->prepare("INSERT INTO products (product_name, price, details, category, subcategory, date_added) VALUES(?, ?, ?, ?, ?, now())");
-		$res->execute([$fr_name, $fr_price, $fr_details, $fr_category, $fr_subcategory]);
-		$created_id = $dbh->lastInsertId();
-		$newname = "$created_id.jpg";
-		move_uploaded_file($_FILES['fr_image']['tmp_name'], "../inventory_images/".$newname);
-		// prevent form resubmission on reload
-		header("location: inventory_list.php");
-		exit();
-
 	}
 	?>
 	<style type="text/css">
@@ -94,33 +86,19 @@
 <?php include_once("../header.php"); ?>
 <div class="container">
 	<div class="row">
-		<div class="col-xs-1 col-md-2">
-		</div>
-		<div class="col-xs-10 col-md-8">
-			<a href="#">+Add Inventory Items</a>
-		</div>
-		<div class="col-xs-1 col-md-2">
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-xs-0 col-md-2">
-		</div>
-		<div class="col-xs-12 col-md-8">
-		
-		<table class="table table-striped table-bordered">
-			<thead>
-				<tr><th>ID</th><th>Name</th><th>Date Added</th></tr>
-			</thead>
-			<tbody>
-				<?php echo $product_list; ?>
-			</tbody>
-		</table>
-		</div>
-		<div class="col-xs-0 col-md-2">
-		</div>
-	</div>
-	<div class="row">
-		<form id="form1" name="form1" method="post" action="inventory_list.php" class="form-horizontal" enctype="multipart/form-data">
+		<form id="form1" name="form1" method="post" action="inventory_edit.php" class="form-horizontal" enctype="multipart/form-data">
+			<div class="form-group hidden">
+			    <div class="input-group">
+			    	<span class="input-group-addon">Product ID</span>
+					<input name="this_id" type="text" class="form-control" id="this_id" size="40" value="<?php echo $targetID;?>"/>
+				</div>
+			</div>
+			<div class="form-group">
+			    <div class="input-group">
+			    	<span class="input-group-addon">Product ID</span>
+					<input name="showid" type="text" class="form-control" id="showid" size="40" value="<?php echo $targetID;?>" disabled/>
+				</div>
+			</div>
 			<div class="form-group">
 			    <div class="input-group">
 			    	<span class="input-group-addon">Product Name</span>
@@ -130,25 +108,25 @@
 			<div class="form-group">
 				<div class="input-group">
 			    	<span class="input-group-addon">Product Price</span>
-					<input name="fr_price" type="text" class="form-control" id="fr_price" size="40" value="<?php echo $price;?>" />
+					<input name="fr_price" type="text" class="form-control" id="fr_price" size="40" value="<?php echo $product_price;?>" />
 				</div>
 			</div>
 			<div class="form-group">
 				<div class="input-group">
 			    	<span class="input-group-addon">Category</span>
-					<input name="fr_category" type="text" class="form-control" id="fr_category" size="40" value="<?php echo $category;?>" />
+					<input name="fr_category" type="text" class="form-control" id="fr_category" size="40" value="<?php echo $product_cat;?>" />
 				</div>
 			</div>
 			<div class="form-group">
 				<div class="input-group">
 			    	<span class="input-group-addon">Subcategory</span>
-					<input name="fr_subcategory" type="text" class="form-control" id="fr_subcategory" size="40" value="<?php echo $subcategory;?>" />
+					<input name="fr_subcategory" type="text" class="form-control" id="fr_subcategory" size="40" value="<?php echo $product_subcat;?>" />
 				</div>
 			</div>
 			<div class="form-group">
 				<div class="input-group">
 			    	<span class="input-group-addon">Product Details</span>
-					<textarea name="fr_details" type="textarea" rows="4" class="form-control" id="fr_details" size="40" value="<?php echo $details;?>"> </textarea>
+					<textarea name="fr_details" rows="4" class="form-control" id="fr_details" size="40"><?php echo $product_details;?></textarea>
 				</div>
 			</div>
 			<div class="form-group">
@@ -158,7 +136,8 @@
 				</div>
 			</div>
 			<div class="form-group">
-			<input name="button" type="submit" class="btn btn-default btn-primary" id="button" value="Add Item Now"/>
+			<input name="button" type="submit" class="btn btn-default btn-primary" id="button" value="Make Changes"/>
+			<a class="btn btn-default" href="inventory_list.php">Cancel</a>
 			<!--<p class="helper-text">Not an admin? <a href="#">Go to the store.</a></p>-->
 			</div>
 		</form>
