@@ -43,11 +43,16 @@ if($existCount==0){
     <link rel="stylesheet" href="../css/bootstrap.min.css">
 </head>
 <body>
-<?php include_once("../header.php"); ?>
+<?php 
+	$path_parts = pathinfo(__FILE__);
+	$GLOBALS['page'] = $path_parts['basename'];
+	include_once("admin_header.php");
+?>
 <div class="container">
 	<h1>Admin Area</h1>
-	<a href="inventory_list.php">Manage Inventory</a>
-	<a href="logout.php">Log Out</a>
+	<div class="list-group">
+	<a class="list-group-item"href="inventory_list.php">Manage Inventory</a>
+	</div>
 </div>
 </body>
 </htmL>

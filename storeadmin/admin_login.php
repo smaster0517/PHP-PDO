@@ -99,7 +99,7 @@
 					</div>
 					<br>
 					<input name="button" type="submit" class="btn btn-default btn-primary" id="button" value="Sign In"/>
-					<p class="helper-text">Not an admin? <a href="#">Go to the store.</a></p>
+					<p class="helper-text">Not an admin? <a href="../index.php">Go to the store.</a></p>
 				</form>
 			</div>
 		</div>
