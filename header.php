@@ -12,7 +12,7 @@
 		<div id="navbar" class="navbar-collapse collapse">
 			<ul class="nav navbar-nav navbar-right">
 				<li class="<?php echo ($page == "index.php" ? "active" : "");?>"><a href="index.php">Home</a></li>
-				<li><a href="logout.php">Logout</a></li>
+				<li><a href="#"><span style="padding-right:5px;" class="glyphicon glyphicon-shopping-cart" aria-hidden="true"></span> My Cart</a></li>
 			</ul>
 			<form class="navbar-form navbar-right">
 				<input type="text" class="form-control" placeholder="Search...">

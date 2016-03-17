@@ -16,6 +16,11 @@ $dynamic_list = "";
             if (strlen(trim($check)) == 0){
                 $product_details = "<u>No Details</u>";
             }
+            $more = "";
+            if (strlen($product_details)>60) {
+                $product_details = substr($product_details,60);
+                $more = '...<a href="product.php?id='.$product_id.'">read more</a>';
+            }
             $date_added = strftime("%b %d, %Y", strtotime($row["date_added"]));
             $dynamic_list .= '
             <div class="col-sm-4 col-lg-4 col-md-4">
@@ -25,9 +30,9 @@ $dynamic_list = "";
                         <h4 class="pull-right">Rs.'.$product_price.'</h4>
                         <h4><a href="product.php?id='.$product_id.'">'.$product_name.'</a>
                         </h4>
-                        <p>'.$product_details.'</p>
+                        <p>'.$product_details.$more.'</p>
                     </div>
-                    <div class="ratings">
+                    <div class="extra-data">
                         <p class="pull-right">'.$date_added.'</p>
                          <p>'.$product_cat.' > '.$product_subcat.'</p>
                     </div>
@@ -43,17 +48,20 @@ $dynamic_list = "";
 <!DOCTYPE html>
 <htmL>
 <head>
-    <title>PHP Pagination</title>
+    <title>Ecommerce Store</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <style type="text/css">
     .thumbnail img{
         width: 100%;
         height: 150px;
     }
-    .ratings {
+    .extra-data {
     padding-right: 10px;
     padding-left: 10px;
     color: #d17581;
+    }
+    .caption {
+        height:110px;
     }
     </style>
 </head>
