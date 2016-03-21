@@ -1,63 +1,83 @@
 <?php
 session_start();
+include "connect_to_mysql_pdo.php";
+
 if(isset($_POST['pid'])){
     $pid=$_POST['pid'];
     $wasFound=false;
     $i=0;
-}
-if(!isset($_SESSION['cart_array']) || cout($SESSION['cart_array']) < 1 ){
-    $SESSION['cart_array'] = array(1=> array("item_id"=> $pid,"quantity"=>1));
-}
-else{
-    foreach ($SESSION['cart_array'] as $each_item) {
-        $i++;
-        while(list($key,$value)=each($each_item)){
-            if($key=="item_id" && $value==$pid){
-                array_splice($SESSION['cart_array'],$i-1,1,array(array("item_id"=>$pid,"quantity"=>$each_item['quantity']+1)));
-                $wasFound = true;
-            }
-        }
-    }//close foreach
-    if($wasFound == false){
-        array_push($_SESSION["cart_array"], array("item_id" => $pid, "quantity" =>1));
+    // if cart session variable is not set or cart array is empty
+    if(!isset($_SESSION["cart_array"]) || count($_SESSION["cart_array"]) < 1 ){
+        $_SESSION["cart_array"] = array(1=> array("item_id"=> $pid,"quantity"=>1));
     }
-    
+    else{
+        foreach ($_SESSION["cart_array"] as $each_item){
+            $i++;
+            while(list($key,$value)=each($each_item)){
+                if($key=="item_id" && $value==$pid){
+                    // since item is in cart already, increase quantity
+                    array_splice($_SESSION["cart_array"], $i-1, 1, array(array("item_id"=>$pid,"quantity"=>$each_item['quantity']+1)));
+                    $wasFound = true;
+                }// close if condition
+            }// close while loop
+        }// close foreach loop
+        if($wasFound == false){
+            array_push($_SESSION["cart_array"], array("item_id" => $pid, "quantity" =>1));
+        } 
+    }
+    header("Location:cart.php");
 }
 
 
-
-
+// empty shopping cart
 if(isset($_GET['cmd']) && $_GET['cmd']=="emptycart"){
-    unset($_SESSION['cart_array']);
+    unset($_SESSION["cart_array"]);
 }
 
 
-
+// render the cart
 $cartOutput = "";
-if(!isset($_SESSION['cart_array']) || cout($SESSION['cart_array']) < 1 ){
-    $cartOutput= "<h2>Your Cart is empty</h2>";
+$cart_total="";
+if(!isset($_SESSION["cart_array"]) || count($_SESSION["cart_array"]) < 1 ){
+    $cartOutput= '<h3>Your Cart is empty</h3>';
 }
 else{
     $i=0;
-    foreach($SESSION['cart_array'] as $each_item) {
+    foreach($_SESSION["cart_array"] as $each_item) {
         $i++;
-        $cartOutput = "<h2>Cart Item.$i.</h2>";
-        while(list($key, $value)=each($each_item)) {
-        $cartOutput=$key.":".$value."<br>";
+        $item_id = $each_item['item_id'];
+        $res = $dbh->prepare("SELECT * FROM products WHERE id=?LIMIT 1");
+        $res->execute([$item_id]);
+        while ($row = $res->fetch()) {
+        $product_name = $row['product_name'];
+        $product_price = $row['price'];
         }
+    $res->execute();
+        $item_total = $product_price*$each_item['quantity'];
+        $cart_total = $item_total+$cart_total;
+        $cartOutput .= '
+                    <tr>
+                        <td><img src="inventory_images/'.$each_item['item_id'].'.jpg" alt="A plain and simple '.$product_name.'." title="A '.$product_name.'."/></td>
+        ';
+        $cartOutput .= '                <td>
+                            <div>
+                                <p><a href="product.php?id=' . $each_item['item_id'] . '">' . ucwords($product_name) . '</a> (Product ID:' . $each_item['item_id'] . ')</p><span class="price">Rs.' . $product_price . '</span>
+                            </div>
+                        </td>
+        ';
+        $cartOutput .= '                <td>' . $each_item['quantity'] . '</td>
+        ';
+        $cartOutput .= '                <td class="price">  Rs.' . $item_total . '
+                            <form action="cart.php" method="post" class="pull-right">
+                                <input type="hidden" name="index_to_remove" value="'.$i.'"/>
+                                <button name="deleteBtn"'.$item_id.' type="submit">
+                                    <span class="glyphicon glyphicon-trash" aria-hidden="true">
+                                </button>
+                            </form>
+                        </td>
+';
     }
-    
 }
-
-$i=0;
-    foreach($SESSION['cart_array'] as $each_item) {
-        $i++;
-        $cartOutput = "<h2>Cart Item.$i.</h2>";
-        while(list($key, $value)=each($each_item)) {
-        $cartOutput="key".$key.":".$value."<br>";
-        }
-    }
-    var_dump($_SESSION);
 ?>
 <!DOCTYPE html>
 <htmL>
@@ -65,18 +85,68 @@ $i=0;
     <title>My Cart - Ecommerce Store</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <style type="text/css">
-    body{margin-top: 100px;}
+        body{
+            margin-top: 25px;
+        }
+        td img{
+            width: 100px;
+        }
+        .price{
+            font-weight: bold;
+            text-align: right;
+        }
+        .table>tbody>tr>td {
+            border-top: none;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr td:nth-child(2){
+            width:100%;
+        }
     </style>
 </head>
 <body>
-<?php include_once("header.php"); ?>
+<?php
+    $path_parts = pathinfo(__FILE__);
+    $GLOBALS['page'] = $path_parts['basename'];
+    include_once("header.php"); 
+?>
 <div class="container">
     <div class="row">
-    <?php echo $cartOutput; ?>
-    <a href="cart.php?cmd=emptycart">empty cart</a>
+        <div class="col-sm-8 col-md-9">
+            <table class="table table-hover">
+                <thead>
+                    <tr class="info"><th>No.</th><th>Name</th><th>QNT</th><th style="text-align:right;">Total</th></tr>
+                </thead>
+                <tbody><?php echo $cartOutput; ?>
+                    <tr>
+                    <td colspan="2"></td>
+                    <td class="price">Total:</td><td class="price">Rs.<?php echo $cart_total; ?></td>
+                    </tr>
+                </tbody>
+            </table>
+            <a href="cart.php?cmd=emptycart">Click Here to Empty your Cart</a>
+        </div>
+        <div class="col-sm-4 col-md-3">
+            <button class="btn btn-primary" style="width:100%;margin-bottom:10px;padding:9px;">Check Out</button>
+            <div class="well well-lg">
+                <table class="table" style="border-top:0px;">
+                    <tr><td>SUBTOTAL:<span class="pull-right price">Rs.<?php echo $cart_total; ?></span></td></tr>
+                    <tr><td>SHIPPING:<span class="pull-right">Free Shipping!</span></td></tr>
+                    <tr><td>TAX:<span class="pull-right">Not Applicable</span></td></tr>
+                    <tr class="info"><td>TOTAL:<span class="pull-right price">Rs.<?php echo $cart_total; ?></span></td></tr>
+                </table>
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Coupon Code">
+                    <span class="input-group-btn">
+                        <button class="btn btn-success" type="button">Apply</button>
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
-    <!-- /.container -->
+
+</div><!-- /.container -->
     <?php include_once("footer.php"); ?>
 </body>
 </html>
