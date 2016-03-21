@@ -39,27 +39,33 @@ $dynamic_list = "";
     <title><?php echo $product_name;?> - Ecommerce Store</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <style type="text/css">
-    .thumbnail img{
-        width: 100%;
-    }
-    .caption-full {
-    padding-right: 10px;
-    padding-left: 10px;
-    }
-    .extra-data {
-    padding-right: 10px;
-    padding-left: 10px;
-    color: #d17581;
-    }
-
-    .thumbnail .caption-full {
-        padding: 9px;
-        color: #333;
-    }
+        body {
+            margin-top: 25px;
+        }
+        .thumbnail img{
+            width: 100%;
+        }
+        .caption-full {
+            padding-right: 10px;
+            padding-left: 10px;
+        }
+        .extra-data {
+            padding-right: 10px;
+            padding-left: 10px;
+            color: #d17581;
+        }
+        .thumbnail .caption-full {
+            padding: 9px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
-<?php include_once("header.php"); ?>
+<?php 
+    $path_parts = pathinfo(__FILE__);
+    $GLOBALS['page'] = $path_parts['basename'];
+    include_once("header.php"); 
+?>
 <div class="container">
 
         <div class="row">
@@ -81,7 +87,7 @@ $dynamic_list = "";
                     <h3><a href="#"><?php echo$product_name ?></a>
                     </h3>
                     <p><?php echo$product_details; ?></p>
-                    <form id="form1" name="form1" method="post" action="cart.php" class="form-horizontal">
+                    <form id="form1" name="form1" method="post" action="cart.php">
                         <div class="form-group">
                             <input type="hidden" name="pid" id="pid" value="<?php echo $id;?>"/>
                             <input type="submit" class="btn btn-default btn-primary" id="button" value="add to cart">
