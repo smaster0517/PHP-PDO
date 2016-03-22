@@ -2,13 +2,16 @@
 session_start();
 include "connect_to_mysql_pdo.php";
 
+///////////////////////////////////////////////////////////////////////////////////
+//                          Add items to shopping cart
+///////////////////////////////////////////////////////////////////////////////////
 if(isset($_POST['pid'])){
     $pid=$_POST['pid'];
     $wasFound=false;
     $i=0;
     // if cart session variable is not set or cart array is empty
     if(!isset($_SESSION["cart_array"]) || count($_SESSION["cart_array"]) < 1 ){
-        $_SESSION["cart_array"] = array(1=> array("item_id"=> $pid,"quantity"=>1));
+        $_SESSION["cart_array"] = array(0=> array("item_id"=> $pid,"quantity"=>1));
     }
     else{
         foreach ($_SESSION["cart_array"] as $each_item){
@@ -28,14 +31,30 @@ if(isset($_POST['pid'])){
     header("Location:cart.php");
 }
 
-
-// empty shopping cart
+///////////////////////////////////////////////////////////////////////////////////
+//                          Empty the shopping cart
+///////////////////////////////////////////////////////////////////////////////////
 if(isset($_GET['cmd']) && $_GET['cmd']=="emptycart"){
     unset($_SESSION["cart_array"]);
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+//                          Remove item from the shopping cart
+///////////////////////////////////////////////////////////////////////////////////
+if(isset($_POST["index_to_remove"]) && $_POST["index_to_remove"]!="" ){
+    $key_to_remove = $_POST["index_to_remove"];
+    if (count($_SESSION["cart_array"]) <= 1) {
+        unset($_SESSION{"cart_array"}); // unset shopping cart if no items remain
+    }
+    else {
+        unset($_SESSION["cart_array"]["$key_to_remove"]); // remove specefic item
+        sort($_SESSION["cart_array"]); // sort cart so that the first index is 0
+    }
+}
 
-// render the cart
+///////////////////////////////////////////////////////////////////////////////////
+//                          Display the shopping cart
+///////////////////////////////////////////////////////////////////////////////////
 $cartOutput = "";
 $cart_total="";
 if(!isset($_SESSION["cart_array"]) || count($_SESSION["cart_array"]) < 1 ){
@@ -44,40 +63,36 @@ if(!isset($_SESSION["cart_array"]) || count($_SESSION["cart_array"]) < 1 ){
 else{
     $i=0;
     foreach($_SESSION["cart_array"] as $each_item) {
-        $i++;
         $item_id = $each_item['item_id'];
         $res = $dbh->prepare("SELECT * FROM products WHERE id=?LIMIT 1");
         $res->execute([$item_id]);
         while ($row = $res->fetch()) {
-        $product_name = $row['product_name'];
-        $product_price = $row['price'];
+            $product_name = $row['product_name'];
+            $product_price = $row['price'];
         }
-    $res->execute();
+        $res->execute();
         $item_total = $product_price*$each_item['quantity'];
         $cart_total = $item_total+$cart_total;
         $cartOutput .= '
                     <tr>
-                        <td><img src="inventory_images/'.$each_item['item_id'].'.jpg" alt="A plain and simple '.$product_name.'." title="A '.$product_name.'."/></td>
-        ';
+                        <td><img src="inventory_images/'.$each_item['item_id'].'.jpg" alt="A plain and simple '.$product_name.'." title="A '.$product_name.'."/></td>';
         $cartOutput .= '                <td>
                             <div>
                                 <p><a href="product.php?id=' . $each_item['item_id'] . '">' . ucwords($product_name) . '</a> (Product ID:' . $each_item['item_id'] . ')</p><span class="price">Rs.' . $product_price . '</span>
                             </div>
-                        </td>
-        ';
-        $cartOutput .= '                <td>' . $each_item['quantity'] . '</td>
-        ';
+                        </td>';
+        $cartOutput .= '                <td>' . $each_item['quantity'] . '</td>';
         $cartOutput .= '                <td class="price">  Rs.' . $item_total . '
                             <form action="cart.php" method="post" class="pull-right">
+                                <button name="deleteBtn'.$item_id.'" type="submit">
                                 <input type="hidden" name="index_to_remove" value="'.$i.'"/>
-                                <button name="deleteBtn"'.$item_id.' type="submit">
                                     <span class="glyphicon glyphicon-trash" aria-hidden="true">
                                 </button>
                             </form>
-                        </td>
-';
-    }
-}
+                        </td>'; // name="deleteBtn"'.$item_id.'"; because we don't want duplicates
+        $i++;
+    }// close foreach loop
+}// close else block
 ?>
 <!DOCTYPE html>
 <htmL>
