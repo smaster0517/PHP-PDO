@@ -1,7 +1,8 @@
 <?php
 session_start();
 include "connect_to_mysql_pdo.php";
-
+include "functions.php";
+setlocale(LC_MONETARY, "en_US"); //is this really useful?
 ///////////////////////////////////////////////////////////////////////////////////
 //                          Add items to shopping cart
 ///////////////////////////////////////////////////////////////////////////////////
@@ -73,16 +74,17 @@ else{
         $res->execute();
         $item_total = $product_price*$each_item['quantity'];
         $cart_total = $item_total+$cart_total;
+
         $cartOutput .= '
                     <tr>
                         <td><img src="inventory_images/'.$each_item['item_id'].'.jpg" alt="A plain and simple '.$product_name.'." title="A '.$product_name.'."/></td>';
         $cartOutput .= '                <td>
                             <div>
-                                <p><a href="product.php?id=' . $each_item['item_id'] . '">' . ucwords($product_name) . '</a> (Product ID:' . $each_item['item_id'] . ')</p><span class="price">Rs.' . $product_price . '</span>
+                                <p><a href="product.php?id=' . $each_item['item_id'] . '">' . ucwords($product_name) . '</a> (Product ID:' . $each_item['item_id'] . ')</p><span class="price">' . money_format('%.2n', $product_price) . '</span>
                             </div>
                         </td>';
         $cartOutput .= '                <td>' . $each_item['quantity'] . '</td>';
-        $cartOutput .= '                <td class="price">  Rs.' . $item_total . '
+        $cartOutput .= '                <td class="price">  ' .  money_format('%.2n', $item_total) . '
                             <form action="cart.php" method="post" class="pull-right">
                                 <button name="deleteBtn'.$item_id.'" type="submit">
                                 <input type="hidden" name="index_to_remove" value="'.$i.'"/>
@@ -136,7 +138,7 @@ else{
                 <tbody><?php echo $cartOutput; ?>
                     <tr>
                     <td colspan="2"></td>
-                    <td class="price">Total:</td><td class="price">Rs.<?php echo $cart_total; ?></td>
+                    <td class="price">Total:</td><td class="price"><?php echo money_format('%.2n', $cart_total); ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -146,10 +148,10 @@ else{
             <button class="btn btn-primary" style="width:100%;margin-bottom:10px;padding:9px;">Check Out</button>
             <div class="well well-lg">
                 <table class="table" style="border-top:0px;">
-                    <tr><td>SUBTOTAL:<span class="pull-right price">Rs.<?php echo $cart_total; ?></span></td></tr>
+                    <tr><td>SUBTOTAL:<span class="pull-right price"><?php echo money_format('%.2n', $cart_total); ?></span></td></tr>
                     <tr><td>SHIPPING:<span class="pull-right">Free Shipping!</span></td></tr>
                     <tr><td>TAX:<span class="pull-right">Not Applicable</span></td></tr>
-                    <tr class="info"><td>TOTAL:<span class="pull-right price">Rs.<?php echo $cart_total; ?></span></td></tr>
+                    <tr class="info"><td>TOTAL:<span class="pull-right price"><?php echo money_format('%.2n', $cart_total); ?></span></td></tr>
                 </table>
                 <div class="input-group">
                     <input type="text" class="form-control" placeholder="Coupon Code">
