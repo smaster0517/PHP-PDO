@@ -40,6 +40,38 @@ if(isset($_GET['cmd']) && $_GET['cmd']=="emptycart"){
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
+//                          Increase/Decrease the item quantity
+///////////////////////////////////////////////////////////////////////////////////
+if(isset($_POST['item_to_inc']) && $_POST['item_to_inc']!=""){
+    $item_to_inc = $_POST['item_to_inc'];
+    $i=0;
+    foreach ($_SESSION["cart_array"] as $each_item){
+            $i++;
+            while(list($key,$value)=each($each_item)){
+                if($key=="item_id" && $value==$item_to_inc){
+                    // since item is in cart already, increase quantity
+                    array_splice($_SESSION["cart_array"], $i-1, 1, array(array("item_id"=>$item_to_inc,"quantity"=>$each_item['quantity']+1)));
+                    $wasFound = true;
+                }// close if condition
+            }// close while loop
+        }// close foreach loop
+}
+if(isset($_POST['item_to_dec']) && $_POST['item_to_dec']!="" && $_POST['quant_val']>1){
+    $item_to_dec = $_POST['item_to_dec'];
+    $i=0;
+
+    foreach ($_SESSION["cart_array"] as $each_item){
+            $i++;
+            while(list($key,$value)=each($each_item)){
+                if($key=="item_id" && $value==$item_to_dec){
+                    // since item is in cart already, increase quantity
+                    array_splice($_SESSION["cart_array"], $i-1, 1, array(array("item_id"=>$item_to_dec,"quantity"=>$each_item['quantity']-1)));
+                    $wasFound = true;
+                }// close if condition
+            }// close while loop
+        }// close foreach loop
+}
+///////////////////////////////////////////////////////////////////////////////////
 //                          Remove item from the shopping cart
 ///////////////////////////////////////////////////////////////////////////////////
 if(isset($_POST["index_to_remove"]) && $_POST["index_to_remove"]!="" ){
@@ -72,18 +104,33 @@ else{
             $product_price = $row['price'];
         }
         $res->execute();
+        $quant = $each_item['quantity'];
         $item_total = $product_price*$each_item['quantity'];
         $cart_total = $item_total+$cart_total;
 
         $cartOutput .= '
                     <tr>
-                        <td><img src="inventory_images/'.$each_item['item_id'].'.jpg" alt="A plain and simple '.$product_name.'." title="A '.$product_name.'."/></td>';
+                        <td><img src="inventory_images/'.$each_item['item_id'].'.jpg" alt="A plain and simple '.$product_name.'." title="A '.$product_name.'."/></td>
+        ';
         $cartOutput .= '                <td>
                             <div>
                                 <p><a href="product.php?id=' . $each_item['item_id'] . '">' . ucwords($product_name) . '</a> (Product ID:' . $each_item['item_id'] . ')</p><span class="price">' . money_format('%.2n', $product_price) . '</span>
                             </div>
-                        </td>';
-        $cartOutput .= '                <td>' . $each_item['quantity'] . '</td>';
+                        </td>
+        ';
+        $cartOutput .= '                <td><form action="cart.php" method="post" class="pull-left">
+                                <button name="incBtn'.$item_id.'" type="submit" value="increase">
+                                <input type="hidden" name="item_to_inc" value="'.$item_id.'"/>+
+                                </button>
+                            </form>' . $each_item['quantity'] . '
+                            <form action="cart.php" method="post" class="pull-right">
+                                <button name="decBtn'.$item_id.'" type="submit" value="decrease">
+                                <input type="hidden" name="quant_val" value="'.$each_item['quantity'].'"/>
+                                <input type="hidden" name="item_to_dec" value="'.$item_id.'"/>-
+                                </button>
+                            </form>
+                        </td>
+        ';
         $cartOutput .= '                <td class="price">  ' .  money_format('%.2n', $item_total) . '
                             <form action="cart.php" method="post" class="pull-right">
                                 <button name="deleteBtn'.$item_id.'" type="submit">
@@ -91,7 +138,9 @@ else{
                                     <span class="glyphicon glyphicon-trash" aria-hidden="true">
                                 </button>
                             </form>
-                        </td>'; // name="deleteBtn"'.$item_id.'"; because we don't want duplicates
+                        </td>
+                    </tr>
+'; // name="deleteBtn"'.$item_id.'"; because we don't want duplicates
         $i++;
     }// close foreach loop
 }// close else block
@@ -120,6 +169,7 @@ else{
         tr td:nth-child(2){
             width:100%;
         }
+        
     </style>
 </head>
 <body>
