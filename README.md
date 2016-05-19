@@ -10,3 +10,5 @@ Copy all files to your server root directory(or the 'htdocs' if you are using XA
 Import the 'store\_db.sql' file into your server's mysql installation. The database name is store\_db.
 
 _**WARNING**: the store db file is currently out of date! It might pose a problem so proceed with caution._
+
+UI Inspiration: https://blackrockdigital.github.io/startbootstrap-shop-homepage/
